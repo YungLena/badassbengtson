@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BABS</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  background:#080808;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  overflow:hidden;
+}
+#stage{
+  position:relative;
+  flex-shrink:0;
+}
+#album-art{
+  display:block;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  user-select:none;
+  draggable:false;
+}
+.orb-glow{
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+}
+#glow-red{
+  width:36%;aspect-ratio:1/1;
+  top:1%;left:2%;
+  background:radial-gradient(circle,rgba(210,70,20,.55) 0%,rgba(210,70,20,.18) 55%,transparent 75%);
+  animation:pulse-red 5s ease-in-out infinite;
+}
+#glow-orange{
+  width:28%;aspect-ratio:1/1;
+  top:0%;right:2%;
+  background:radial-gradient(circle,rgba(240,155,30,.5) 0%,rgba(240,155,30,.14) 55%,transparent 75%);
+  animation:pulse-orange 6.5s ease-in-out infinite;
+  animation-delay:.8s;
+}
+#glow-navy{
+  width:18%;aspect-ratio:1/1;
+  top:26%;right:5%;
+  background:radial-gradient(circle,rgba(25,40,90,.55) 0%,rgba(25,40,90,.15) 60%,transparent 80%);
+  animation:pulse-navy 7s ease-in-out infinite;
+  animation-delay:1.5s;
+}
+#glow-small{
+  width:14%;aspect-ratio:1/1;
+  top:28%;left:3%;
+  background:radial-gradient(circle,rgba(210,70,20,.4) 0%,transparent 70%);
+  animation:pulse-red 4.5s ease-in-out infinite;
+  animation-delay:.4s;
+}
+#glow-bot{
+  width:20%;aspect-ratio:1/1;
+  bottom:8%;left:2%;
+  background:radial-gradient(circle,rgba(240,155,30,.35) 0%,transparent 65%);
+  animation:pulse-orange 5.5s ease-in-out infinite;
+  animation-delay:2s;
+}
+@keyframes pulse-red{
+  0%,100%{opacity:.5;transform:scale(.94);}
+  50%{opacity:1;transform:scale(1.1);}
+}
+@keyframes pulse-orange{
+  0%,100%{opacity:.45;transform:scale(.96);}
+  50%{opacity:.95;transform:scale(1.08);}
+}
+@keyframes pulse-navy{
+  0%,100%{opacity:.4;transform:scale(.93);}
+  50%{opacity:.85;transform:scale(1.12);}
+}
+.hotspot{
+  position:absolute;
+  background:transparent;
+  display:block;
+  text-decoration:none;
+  z-index:10;
+}
+#hs-listen{
+  width:36%;aspect-ratio:1/1;
+  top:1%;left:2%;
+  border-radius:50%;
+  cursor:pointer;
+}
+#hs-watch{
+  width:28%;aspect-ratio:1/1;
+  top:0%;right:2%;
+  border-radius:50%;
+  cursor:pointer;
+}
+#hs-talk{
+  width:26%;height:16%;
+  bottom:9%;right:1%;
+  border-radius:12px;
+  cursor:pointer;
+}
+#player-drawer{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:152px;
+  z-index:30;
+  transform:translateY(100%);
+  transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+  display:flex;
+  align-items:stretch;
+}
+#player-drawer.open{
+  transform:translateY(0);
+}
+#player-drawer iframe{
+  width:100%;
+  height:152px;
+  border:none;
+  border-radius:0;
+  display:block;
+}
+#player-close{
+  position:absolute;
+  top:-28px;
+  right:8px;
+  width:26px;height:26px;
+  background:rgba(10,10,10,0.75);
+  border:none;
+  color:#aaa;
+  font-size:14px;
+  cursor:pointer;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  line-height:1;
+  z-index:31;
+  transition:color 0.2s;
+}
+#player-close:hover{color:#fff;}
+#hs-octopus{
+  position:absolute;
+  width:28%;height:34%;
+  bottom:4%;left:0%;
+  border-radius:40%;
+  cursor:crosshair;
+  z-index:10;
+}
+#ink-canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:20;
+}
+
+#blackhole-canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:25;
+}
+#vortex-canvas{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:100;
+  display:none;
+}
+
+</style>
+
+<meta property="og:title" content="Badass Bengtson">
+<meta property="og:description" content="wanna listen? wanna watch? wanna talk?">
+<meta property="og:image" content="https://raw.githubusercontent.com/YungLena/badassbengtson/main/BABS.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/YungLena/badassbengtson/main/BABS.png">
+</head>
+<body>
+<div id="stage">
+  <img id="album-art" src="BABS.png" alt="Badass Bengtson">
+  <div class="orb-glow" id="glow-red"></div>
+  <div class="orb-glow" id="glow-orange"></div>
+  <div class="orb-glow" id="glow-navy"></div>
+  <div class="orb-glow" id="glow-small"></div>
+  <div class="orb-glow" id="glow-bot"></div>
+  <div class="hotspot" id="hs-listen" role="button" aria-label="Listen on Spotify"></div>
+  <div id="player-drawer">
+    <button id="player-close" aria-label="Close player">&#x2715;</button>
+    <iframe src="https://open.spotify.com/embed/artist/3hGhF7KCMH9SsvhI6LXBY0?utm_source=generator&theme=0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+  </div>
+  <a class="hotspot" id="hs-watch" href="https://www.instagram.com/badass_bengtson/" target="_blank" rel="noopener" aria-label="Watch on Instagram"></a>
+  <a class="hotspot" id="hs-talk" href="mailto:lena@pattriarkatet.se" aria-label="Send email"></a>
+  <div id="hs-octopus"></div>
+  <canvas id="ink-canvas"></canvas>
+  <canvas id="blackhole-canvas"></canvas>
+<canvas id="vortex-canvas"></canvas>
+</div>
+
+<script>
+// Size stage as largest square that fits viewport
+const stage = document.getElementById('stage');
+const canvas = document.getElementById('ink-canvas');
+const ctx = canvas.getContext('2d');
+
+function sizeStage(){
+  const s = Math.min(window.innerWidth, window.innerHeight);
+  stage.style.width = s + 'px';
+  stage.style.height = s + 'px';
+  canvas.width = s;
+  canvas.height = s;
+}
+sizeStage();
+window.addEventListener('resize', sizeStage);
+
+// --- Sinister ink system ---
+let tendrils = [], pools = [], inkRunning = false;
+
+class Pool {
+  constructor(x,y,maxR){
+    this.x=x; this.y=y;
+    this.r=0; this.maxR=maxR||16+Math.random()*18;
+    this.alpha=0.92;
+    this.born=Date.now();
+    this.life=10000+Math.random()*5000;
+  }
+  update(){
+    if(this.r<this.maxR) this.r+=0.35+Math.random()*0.2;
+    const age=Date.now()-this.born;
+    const fade=this.life*0.5;
+    if(age>fade) this.alpha=0.92*(1-(age-fade)/(this.life*0.5));
+  }
+  draw(){
+    if(this.alpha<=0.01) return;
+    const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r);
+    g.addColorStop(0,`rgba(3,6,22,${this.alpha})`);
+    g.addColorStop(0.6,`rgba(3,6,22,${this.alpha*0.7})`);
+    g.addColorStop(1,`rgba(3,6,22,0)`);
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle=g;
+    ctx.fill();
+  }
+  isDead(){return Date.now()-this.born>this.life;}
+}
+
+class Tendril {
+  constructor(x,y,angle,w){
+    this.pts=[{x,y}];
+    this.angle=angle;
+    this.w=w||2.5+Math.random()*4.5;
+    this.progress=0;
+    this.speed=0.45+Math.random()*0.55;
+    this.maxPts=35+Math.floor(Math.random()*55);
+    this.alpha=0.85+Math.random()*0.12;
+    this.born=Date.now();
+    this.life=9000+Math.random()*6000;
+    this.children=[];
+    this.childSpawned=false;
+    // precompute path
+    let cx=x,cy=y,a=angle;
+    for(let i=0;i<this.maxPts;i++){
+      a+=(Math.random()-0.45)*0.32;
+      const step=6+Math.random()*6;
+      cx+=Math.cos(a)*step;
+      cy+=Math.sin(a)*step+0.5; // subtle gravity drip
+      this.pts.push({x:cx,y:cy});
+    }
+  }
+  update(){
+    this.progress=Math.min(this.progress+this.speed, this.pts.length-1);
+    if(!this.childSpawned&&this.progress>this.maxPts*0.45&&Math.random()<0.025){
+      this.childSpawned=true;
+      const p=this.pts[Math.floor(this.progress)];
+      this.children.push(new Tendril(p.x,p.y,this.angle+(Math.random()-0.5)*1.4,this.w*0.55));
+    }
+    this.children.forEach(c=>c.update());
+  }
+  getA(){
+    const age=Date.now()-this.born;
+    const fs=this.life*0.5;
+    if(age<fs) return this.alpha;
+    return Math.max(0,this.alpha*(1-(age-fs)/(this.life*0.5)));
+  }
+  isDead(){return Date.now()-this.born>this.life;}
+  draw(){
+    const a=this.getA();
+    if(a<=0.01||this.pts.length<2) return;
+    const end=Math.floor(this.progress);
+    if(end<1) return;
+    ctx.beginPath();
+    ctx.moveTo(this.pts[0].x,this.pts[0].y);
+    for(let i=1;i<=end;i++) ctx.lineTo(this.pts[i].x,this.pts[i].y);
+    const taper=Math.max(0.2,1-end/this.pts.length*0.8);
+    ctx.lineWidth=this.w*taper;
+    ctx.strokeStyle=`rgba(3,6,22,${a})`;
+    ctx.lineCap='round';ctx.lineJoin='round';
+    ctx.stroke();
+    // drip blob at tip
+    if(end<this.pts.length-1){
+      const tip=this.pts[end];
+      ctx.beginPath();
+      ctx.arc(tip.x,tip.y,this.w*taper*0.9,0,Math.PI*2);
+      ctx.fillStyle=`rgba(3,6,22,${a*0.75})`;
+      ctx.fill();
+    }
+    this.children.forEach(c=>c.draw());
+  }
+}
+
+function spawnInk(){
+  const s=canvas.width;
+  // octopus body center: ~16% from left, ~70% from top
+  const ox=s*0.165, oy=s*0.695;
+
+  // main pool at origin
+  pools.push(new Pool(ox,oy,28));
+
+  // spreading tendrils — 8 directions, heavily organic
+  const baseAngles=[
+    -Math.PI/2,         // straight up
+    -Math.PI*0.65,      // upper left
+    -Math.PI*0.35,      // upper right
+    Math.PI*0.15,       // right-ish
+    -Math.PI*0.9,       // left
+    Math.PI*0.5,        // down
+    -Math.PI*0.2,       // shallow right
+    Math.PI*0.35,       // lower right
+  ];
+  baseAngles.forEach(a=>{
+    const jitter=(Math.random()-0.5)*0.35;
+    tendrils.push(new Tendril(ox,oy,a+jitter));
+    // scatter pools along tendril path
+    if(Math.random()>0.4){
+      const d=35+Math.random()*65;
+      pools.push(new Pool(
+        ox+Math.cos(a+jitter)*d,
+        oy+Math.sin(a+jitter)*d,
+        8+Math.random()*12
+      ));
+    }
+  });
+
+  if(!inkRunning) animInk();
+}
+
+function animInk(){
+  inkRunning=true;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  pools=pools.filter(p=>!p.isDead());
+  tendrils=tendrils.filter(t=>!t.isDead());
+  pools.forEach(p=>{p.update();p.draw();});
+  tendrils.forEach(t=>{t.update();t.draw();});
+  if(pools.length||tendrils.length) requestAnimationFrame(animInk);
+  else{ inkRunning=false; ctx.clearRect(0,0,canvas.width,canvas.height); }
+}
+
+document.getElementById('hs-octopus').addEventListener('click',spawnInk);
+
+// === BLACK HOLE & VORTEX ===
+const bhCanvas = document.getElementById('blackhole-canvas');
+const bhCtx = bhCanvas.getContext('2d');
+const vCanvas = document.getElementById('vortex-canvas');
+const vCtx = vCanvas.getContext('2d');
+
+// position: roughly center-upper area ~38% left, 15% top
+// these are percentages of stage size
+const BH_LEFT = 0.38;
+const BH_TOP  = 0.15;
+const BH_RADIUS = 0.038; // as fraction of stage size
+
+let bhPulse = 0;
+let bhActive = false; // true when sucking
+let vortexProgress = 0;
+let redirectDone = false;
+
+function getBHCenter(){
+  const s = parseInt(stage.style.width);
+  return {
+    x: s * BH_LEFT,
+    y: s * BH_TOP,
+    r: s * BH_RADIUS
+  };
+}
+
+// Resize bh canvas with stage
+const origSizeStage = sizeStage;
+function sizeStage(){
+  const s = Math.min(window.innerWidth, window.innerHeight);
+  stage.style.width = s + 'px';
+  stage.style.height = s + 'px';
+  canvas.width = s;
+  canvas.height = s;
+  bhCanvas.width = s;
+  bhCanvas.height = s;
+  vCanvas.width = window.innerWidth;
+  vCanvas.height = window.innerHeight;
+}
+sizeStage();
+window.addEventListener('resize', sizeStage);
+
+// Idle black hole draw — slow rotating dark vortex
+function drawBlackHole(){
+  const s = parseInt(stage.style.width);
+  const {x, y, r} = getBHCenter();
+  bhCtx.clearRect(0,0,s,s);
+
+  bhPulse += 0.008;
+
+  // Accretion disk — rotating conic gradient approximated with arcs
+  const diskR = r * (1.8 + Math.sin(bhPulse)*0.15);
+  for(let i=0; i<12; i++){
+    const a = (i/12)*Math.PI*2 + bhPulse*0.6;
+    const a2 = a + Math.PI/12;
+    const col = i%2===0 ? `rgba(180,60,0,0.18)` : `rgba(240,140,20,0.12)`;
+    bhCtx.beginPath();
+    bhCtx.moveTo(x,y);
+    bhCtx.arc(x,y,diskR,a,a2);
+    bhCtx.closePath();
+    bhCtx.fillStyle=col;
+    bhCtx.fill();
+  }
+
+  // Outer glow
+  const og = bhCtx.createRadialGradient(x,y,r*0.8,x,y,diskR*1.4);
+  og.addColorStop(0,'rgba(60,20,0,0.0)');
+  og.addColorStop(0.5,'rgba(40,10,0,0.12)');
+  og.addColorStop(1,'rgba(0,0,0,0)');
+  bhCtx.beginPath();
+  bhCtx.arc(x,y,diskR*1.4,0,Math.PI*2);
+  bhCtx.fillStyle=og;
+  bhCtx.fill();
+
+  // Dark center — the void
+  const cg = bhCtx.createRadialGradient(x,y,0,x,y,r);
+  cg.addColorStop(0,'rgba(0,0,0,1)');
+  cg.addColorStop(0.7,'rgba(2,0,5,0.98)');
+  cg.addColorStop(1,'rgba(5,0,10,0.0)');
+  bhCtx.beginPath();
+  bhCtx.arc(x,y,r,0,Math.PI*2);
+  bhCtx.fillStyle=cg;
+  bhCtx.fill();
+
+  // event horizon shimmer
+  bhCtx.beginPath();
+  bhCtx.arc(x,y,r,0,Math.PI*2);
+  bhCtx.strokeStyle=`rgba(180,80,10,${0.3+Math.sin(bhPulse*2)*0.15})`;
+  bhCtx.lineWidth=1.5;
+  bhCtx.stroke();
+
+  if(!bhActive) requestAnimationFrame(drawBlackHole);
+}
+drawBlackHole();
+
+// Hit area for black hole
+const bhHit = document.createElement('div');
+bhHit.style.cssText = 'position:absolute;border-radius:50%;cursor:pointer;z-index:26;';
+stage.appendChild(bhHit);
+
+function positionBHHit(){
+  const s = parseInt(stage.style.width);
+  const {x,y,r} = getBHCenter();
+  const hr = r*2.2;
+  bhHit.style.width = hr*2+'px';
+  bhHit.style.height = hr*2+'px';
+  bhHit.style.left = (x-hr)+'px';
+  bhHit.style.top = (y-hr)+'px';
+}
+positionBHHit();
+window.addEventListener('resize', positionBHHit);
+
+// === VORTEX COLLAPSE ===
+// Capture the stage as particles, then spiral them inward
+let particles2 = [];
+
+function startVortex(){
+  bhActive = true;
+  vCanvas.style.display = 'block';
+
+  const stageRect = stage.getBoundingClientRect();
+  const s = parseInt(stage.style.width);
+  const {x:bx, y:by} = getBHCenter();
+  // black hole screen coords
+  const bhScreenX = stageRect.left + bx;
+  const bhScreenY = stageRect.top + by;
+
+  // spawn particles across full viewport
+  const W = window.innerWidth, H = window.innerHeight;
+  const cols = 60, rows = 60;
+  for(let i=0;i<cols;i++){
+    for(let j=0;j<rows;j++){
+      const px = (i/cols)*W;
+      const py = (j/rows)*H;
+      particles2.push({
+        x: px, y: py,
+        ox: px, oy: py,
+        size: 4 + Math.random()*8,
+        angle: Math.atan2(py-bhScreenY, px-bhScreenX),
+        dist: Math.hypot(px-bhScreenX, py-bhScreenY),
+        speed: 0.3+Math.random()*0.4,
+        hue: Math.random()<0.5 ? `rgba(${180+Math.random()*50|0},${40+Math.random()*60|0},0,` : `rgba(${200+Math.random()*50|0},${120+Math.random()*60|0},0,`,
+        life: 1.0,
+      });
+    }
+  }
+
+  // hide the original stage
+  stage.style.transition = 'opacity 0.3s';
+  stage.style.opacity = '0';
+
+  vortexProgress = 0;
+  animVortex(bhScreenX, bhScreenY);
+}
+
+function animVortex(cx, cy){
+  vortexProgress += 0.012;
+  vCtx.fillStyle = `rgba(0,0,0,${0.08 + vortexProgress*0.05})`;
+  vCtx.fillRect(0,0,vCanvas.width,vCanvas.height);
+
+  let allDead = true;
+  for(let p of particles2){
+    if(p.life <= 0) continue;
+    allDead = false;
+
+    const dx = cx - p.x;
+    const dy = cy - p.y;
+    const dist = Math.hypot(dx,dy);
+
+    // spiral inward: pull + tangential spin
+    const pull = Math.min(8, (vortexProgress*vortexProgress*40)/Math.max(1,dist*0.05));
+    const spin = 0.08 + vortexProgress*0.12;
+
+    p.angle += spin;
+    const targetX = cx + Math.cos(p.angle)*dist;
+    const targetY = cy + Math.sin(p.angle)*dist;
+
+    p.x += (dx/dist)*pull*p.speed + (targetX-p.x)*0.04;
+    p.y += (dy/dist)*pull*p.speed + (targetY-p.y)*0.04;
+
+    p.life = Math.max(0, 1 - vortexProgress*1.1 - (1-dist/Math.max(1,Math.hypot(p.ox-cx,p.oy-cy)))*0.5);
+    p.size *= 0.992;
+
+    const s = Math.max(0.5,p.size*(1-vortexProgress*0.5));
+    vCtx.beginPath();
+    vCtx.arc(p.x,p.y,s,0,Math.PI*2);
+    vCtx.fillStyle = p.hue + Math.min(1,p.life*2)+')';
+    vCtx.fill();
+  }
+
+  // draw collapsing ring at center
+  const ringR = Math.max(2,(1-vortexProgress)*80);
+  vCtx.beginPath();
+  vCtx.arc(cx,cy,ringR,0,Math.PI*2);
+  vCtx.strokeStyle=`rgba(255,140,20,${Math.min(1,vortexProgress*3)})`;
+  vCtx.lineWidth=2;
+  vCtx.stroke();
+
+  // final flash then redirect
+  if(vortexProgress > 0.88 && !redirectDone){
+    redirectDone = true;
+    vCtx.fillStyle='rgba(255,200,100,0.6)';
+    vCtx.fillRect(0,0,vCanvas.width,vCanvas.height);
+    setTimeout(()=>{ window.location.href='https://franfestival.com'; }, 200);
+    return;
+  }
+
+  if(!allDead && !redirectDone) requestAnimationFrame(()=>animVortex(cx,cy));
+}
+
+bhHit.addEventListener('click', function(){
+  if(bhActive) return;
+  startVortex();
+});
+
+
+// Spotify drawer
+const drawer = document.getElementById('player-drawer');
+document.getElementById('hs-listen').addEventListener('click', function(){
+  drawer.classList.toggle('open');
+});
+document.getElementById('player-close').addEventListener('click', function(e){
+  e.stopPropagation();
+  drawer.classList.remove('open');
+});
+
+</script>
+</body>
+</html>
